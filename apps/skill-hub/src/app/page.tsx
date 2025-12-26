@@ -1,6 +1,4 @@
-'use client';
-
-import { Button } from '@intern-3a/shadcn';
+import { Header } from './_components/Header';
 
 export default function Index() {
   return (
