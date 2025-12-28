@@ -8,6 +8,7 @@ export default function Index() {
     <div>
       <Button variant="destructive">Hello</Button>
       <Intro />
+      <FilteredClubs />
       <AllClubsCardScrollAnimation />
       <Map />
     </div>
