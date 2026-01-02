@@ -5,15 +5,16 @@ import { Spinner } from '@intern-3a/shadcn';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { AllClubsCardScrollAnimation, ClubFilterSection, FilteredClubsForUser } from './_components';
-import { FilteredClubs } from './_components/filteredClubs';
 import { Intro } from './_components/Intro';
+import { useClub } from './hook/use-club';
 
 export default function Index() {
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const router = useRouter();
   const role = user?.publicMetadata?.role;
-  console.log({ user });
+  const { allClubs } = useClub();
+
   useEffect(() => {
     if (!isLoaded) return;
     if (!user) return;
@@ -52,9 +53,8 @@ export default function Index() {
     <div>
       <Intro />
       <AllClubsCardScrollAnimation />
-      <FilteredClubsForUser />
+      <FilteredClubsForUser allClubs={allClubs} />
       <ClubFilterSection />
-      {/* <FilteredClubs /> */}
     </div>
   );
 }

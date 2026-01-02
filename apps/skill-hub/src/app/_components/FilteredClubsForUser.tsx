@@ -1,76 +1,72 @@
 'use client';
-import { ClassLevelsType } from '@/lib/utils/types';
-import { Calendar, Clock } from 'lucide-react';
+import { CATEGORY_UI_MAP, ClassLevelsType, NewClubType, SUBCATEGORY_ICON_MAP, TimeSlotValueType, WeekDayType } from '@/lib/utils/types';
+import { Backpack, Calendar, Clock, LayoutGrid, LayoutList } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useClub } from '../hook/use-club';
 import FilteredResult from './FilteredResult';
 
-export const FilteredClubsForUser = () => {
-  const { allClubs } = useClub();
+export const FilteredClubsForUser = ({ allClubs }: { allClubs: NewClubType[] }) => {
   const [selectedClass, setSelectedClass] = useState<ClassLevelsType | ''>('');
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedTime, setSelectedTime] = useState<string>('');
-  const [selectedSport, setSelectedSport] = useState<string>('');
-  const [selectedGenre, setSelectedGenre] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<WeekDayType | ''>('');
+  const [selectedTime, setSelectedTime] = useState<TimeSlotValueType | ''>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+  console.log({ allClubs });
+  console.log({ selectedClass });
+  console.log({ selectedDate });
+  console.log({ selectedTime });
+  console.log({ selectedCategory });
+  console.log({ selectedSubCategory });
 
   const resetFilters = () => {
     setSelectedClass('');
     setSelectedDate('');
     setSelectedTime('');
-    setSelectedSport('');
-    setSelectedGenre('');
+    setSelectedCategory('');
+    setSelectedSubCategory('');
   };
 
-  const classesFromClubs = useMemo(() => {
-    const classSet = new Set<ClassLevelsType>();
-    allClubs.forEach((club) => {
-      club.selectedClassLevelNames?.forEach((level) => classSet.add(level));
-    });
-    return Array.from(classSet).map((level) => ({
-      label: level === 'Elementary' ? 'Бага анги' : level === 'Middle' ? 'Дунд анги' : 'Ахлах анги',
-      value: level,
-    }));
-  }, [allClubs]);
+  const classes = [
+    { label: 'Бага анги', value: 'Elementary' },
+    { label: 'Дунд анги', value: 'Middle' },
+    { label: 'Ахлах анги', value: 'High' },
+  ];
 
-  const genreTypeMap: Record<string, string> = {
-    sports: 'SPORTS',
-    arts: 'ARTS',
-    education: 'EDUCATION',
-    entertainment: 'FUN',
-  };
+  const availableDays: { day: WeekDayType; label: string }[] = [
+    { day: 'MON', label: 'Даваа' },
+    { day: 'TUE', label: 'Мягмар' },
+    { day: 'WED', label: 'Лхагва' },
+    { day: 'THU', label: 'Пүрэв' },
+    { day: 'FRI', label: 'Баасан' },
+    { day: 'SAT', label: 'Бямба' },
+    { day: 'SUN', label: 'Ням' },
+  ];
 
-  const courseNameMap: Record<string, string[]> = {
-    Бөх: ['Wrestling Club'],
-    Хөлбөмбөг: ['Football Club', 'Soccer Club'],
-    'Сагсан бөмбөг': ['Basketball Club'],
-    'Тулаан спорт': ['Martial Arts Club', 'Karate Club'],
-    Теннис: ['Tennis Club'],
-    Волейбол: ['Volleyball Club'],
-    Бадминтон: ['Badminton Club'],
-    Бокс: ['Boxing Club'],
-    Гимнастик: ['Gymnastics Club'],
-    'Хөнгөн атлетик': ['Athletics Club', 'Track Club'],
-    'Дугуйн спорт': ['Cycling Club'],
-    'Усан сэлэлт': ['Swimming Club'],
-    'Хөлөг онгоц': ['Rowing Club'],
-    'Уран бүжиг': ['Dance Club'],
-    Хөгжим: ['Music Club'],
-    'Дуу хөгжим': ['Singing Club', 'Music Club'],
-    Зураг: ['Art Club', 'Drawing Club', 'Photography Club'],
-    'Гар урлал': ['Craft Club', 'Art Club'],
-    'Англи хэл': ['English Speaking Club', 'English Club'],
-    Математик: ['Math Club'],
-    Програмчлал: ['Coding Club', 'Programming Club'],
-    Робот: ['Robotics Club', 'Robot Club'],
-    Шатар: ['Chess Club'],
-    'Хүүхдийн тоглоом': ['Gaming Club', 'Fun Club', 'Cooking Club'],
-  };
-
-  const timeSlots = [
+  const timeSlots: { label: string; value: TimeSlotValueType; range: [number, number] }[] = [
     { label: 'Үдээс өмнө', value: 'morning', range: [8, 12] },
     { label: 'Үдээс хойш', value: 'afternoon', range: [12, 18] },
     { label: 'Орой', value: 'evening', range: [18, 22] },
   ];
+
+  const categories = useMemo(() => {
+    const used = new Set(allClubs.map((club) => club.clubCategoryName));
+
+    return Array.from(used).map((key) => ({
+      key,
+      label: CATEGORY_UI_MAP[key]?.label ?? key,
+      icon: CATEGORY_UI_MAP[key]?.icon ?? '📦',
+    }));
+  }, [allClubs]);
+
+  const subCategories = useMemo(() => {
+    if (!selectedCategory) return [];
+
+    const used = new Set(allClubs.filter((club) => club.clubCategoryName === selectedCategory).map((c) => c.clubSubCategoryName));
+
+    return Array.from(used).map((name) => ({
+      name,
+      icon: SUBCATEGORY_ICON_MAP[name] ?? '',
+    }));
+  }, [allClubs, selectedCategory]);
 
   const filteredClubs = useMemo(() => {
     let filtered = [...allClubs];
@@ -81,167 +77,103 @@ export const FilteredClubsForUser = () => {
     }
 
     // Filter by working days
-    if (selectedDate) {
-      const dayMap: Record<string, string> = {
-        Monday: 'MON',
-        Tuesday: 'TUE',
-        Wednesday: 'WED',
-        Thursday: 'THU',
-        Friday: 'FRI',
-        Saturday: 'SAT',
-        Sunday: 'SUN',
-      };
-      const dayCode = dayMap[selectedDate];
-      filtered = filtered.filter((club) => club.selectedClubWorkingDays?.includes(dayCode as any));
-    }
-
-    // Filter by time slot
-    if (selectedTime) {
-      const timeSlot = timeSlots.find((slot) => slot.value === selectedTime);
-      if (timeSlot) {
-        const [startHour, endHour] = timeSlot.range;
-        filtered = filtered.filter((club) => {
-          if (!club.scheduledClubTimes) return false;
-
-          // Check if any scheduled time falls within the selected time range
-          return Object.values(club.scheduledClubTimes).some((time) => {
-            if (!time?.startTime) return false;
-            const clubHour = Number.parseInt(time.startTime.split(':')[0]);
-            return clubHour >= startHour && clubHour < endHour;
-          });
-        });
-      }
-    }
-
-    // Filter by genre/category
-    const genreType = genreTypeMap[selectedGenre];
-    if (genreType) {
+    if (selectedDate && selectedClass) {
       filtered = filtered.filter((club) => {
-        const categoryName = club.clubCategoryName?.toUpperCase();
-        // Map the genre type to category patterns
-        if (genreType === 'SPORTS') {
-          return ['SPORT', 'WRESTLING', 'FOOTBALL', 'BASKETBALL', 'MARTIAL', 'TENNIS', 'VOLLEYBALL', 'BADMINTON', 'BOXING', 'GYMNASTICS', 'ATHLETICS', 'CYCLING', 'SWIMMING', 'ROWING'].some(
-            (pattern) => categoryName?.includes(pattern),
-          );
-        } else if (genreType === 'ARTS') {
-          return ['ART', 'DANCE', 'MUSIC', 'SINGING', 'DRAWING', 'PHOTOGRAPHY', 'CRAFT'].some((pattern) => categoryName?.includes(pattern));
-        } else if (genreType === 'EDUCATION') {
-          return ['ENGLISH', 'MATH', 'PROGRAMMING', 'CODING', 'ROBOTICS', 'CHESS', 'EDUCATION'].some((pattern) => categoryName?.includes(pattern));
-        } else if (genreType === 'FUN') {
-          return ['GAME', 'GAMING', 'FUN', 'COOKING', 'ENTERTAINMENT'].some((pattern) => categoryName?.includes(pattern));
-        }
-        return false;
+        if (!club.scheduledClubTimes || !selectedClass) return false;
+        const classSchedule = club.scheduledClubTimes[selectedClass];
+        if (!classSchedule) return false;
+
+        return selectedDate in classSchedule;
       });
     }
 
+    // Filter by time slot
+    if (selectedTime && selectedDate && selectedClass) {
+      const timeSlot = timeSlots.find((slot) => slot.value === selectedTime);
+      if (!timeSlot) return filtered;
+
+      const [startHour, endHour] = timeSlot.range;
+
+      filtered = filtered.filter((club) => {
+        const classSchedule = club?.scheduledClubTimes?.[selectedClass];
+        if (!classSchedule) return false;
+
+        const daySchedule = classSchedule[selectedDate];
+        if (!daySchedule?.startTime) return false;
+
+        const clubHour = Number(daySchedule.startTime.split(':')[0]);
+        return clubHour >= startHour && clubHour < endHour;
+      });
+    }
+
+    // Filter by genre/category
+    if (selectedCategory) {
+      filtered = filtered.filter((club) => club.clubCategoryName === selectedCategory);
+    }
+
     // Filter by specific sport/course
-    if (selectedSport) {
-      const possibleNames = courseNameMap[selectedSport] || [selectedSport];
-      filtered = filtered.filter((club) =>
-        possibleNames.some((name) => club.clubCategoryName.toLowerCase().includes(name.toLowerCase()) || club.clubName.toLowerCase().includes(selectedSport.toLowerCase())),
-      );
+    if (selectedSubCategory) {
+      filtered = filtered.filter((club) => club.clubSubCategoryName === selectedSubCategory);
     }
 
     return filtered;
-  }, [allClubs, selectedClass, selectedDate, selectedTime, selectedGenre, selectedSport]);
+  }, [allClubs, selectedClass, selectedDate, selectedTime, selectedCategory, selectedSubCategory]);
+  console.log({ filteredClubs });
 
-  const coursesByGenre = {
-    sports: [
-      { name: 'Бөх', icon: '🤼' },
-      { name: 'Хөлбөмбөг', icon: '⚽' },
-      { name: 'Сагсан бөмбөг', icon: '🏀' },
-      { name: 'Тулаан спорт', icon: '🥋' },
-      { name: 'Теннис', icon: '🎾' },
-      { name: 'Волейбол', icon: '🏐' },
-      { name: 'Бадминтон', icon: '🏸' },
-      { name: 'Бокс', icon: '🥊' },
-      { name: 'Гимнастик', icon: '🤸' },
-      { name: 'Хөнгөн атлетик', icon: '🏃' },
-      { name: 'Дугуйн спорт', icon: '🚴' },
-      { name: 'Усан сэлэлт', icon: '🏊' },
-      { name: 'Хөлөг онгоц', icon: '🚣' },
-    ],
-    arts: [
-      { name: 'Уран бүжиг', icon: '💃' },
-      { name: 'Хөгжим', icon: '🎵' },
-      { name: 'Дуу хөгжим', icon: '🎤' },
-      { name: 'Зураг', icon: '🎨' },
-      { name: 'Гар урлал', icon: '✂️' },
-    ],
-    education: [
-      { name: 'Англи хэл', icon: '🇬🇧' },
-      { name: 'Математик', icon: '🔢' },
-      { name: 'Програмчлал', icon: '💻' },
-      { name: 'Робот', icon: '🤖' },
-      { name: 'Шатар', icon: '♟️' },
-    ],
-    entertainment: [{ name: 'Хүүхдийн тоглоом', icon: '🎯' }],
-  };
-
-  const genres = [
-    { id: 'sports', label: 'Спорт', icon: '⚽' },
-    { id: 'arts', label: 'Урлаг', icon: '🎨' },
-    { id: 'education', label: 'Боловсрол', icon: '📚' },
-    { id: 'entertainment', label: 'Зугаа цэнгэл', icon: '🎮' },
-  ];
-
-  const availableDays = [
-    { day: 'Monday', label: 'Даваа' },
-    { day: 'Tuesday', label: 'Мягмар' },
-    { day: 'Wednesday', label: 'Лхагва' },
-    { day: 'Thursday', label: 'Пүрэв' },
-    { day: 'Friday', label: 'Баасан' },
-    { day: 'Saturday', label: 'Бямба' },
-    { day: 'Sunday', label: 'Ням' },
-  ];
-
-  const isFiltered = Boolean(selectedClass || selectedDate || selectedTime || selectedGenre || selectedSport);
+  const isFiltered = Boolean(selectedClass || selectedDate || selectedTime || selectedCategory || selectedSubCategory);
 
   return (
     <div className="relative">
-      {/* Sports Categories */}
+      {/* filters */}
       <section id="sports" className="py-16 md:py-24 relative z-10">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8" data-scroll-point="search-title">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">Дугуйлан хайх</h2>
-          </div>
-          <div className="flex justify-center mb-8" data-scroll-point="class-selector">
-            <div className="inline-flex bg-white/50 rounded-xl p-2 gap-2 border-2 border-slate-200 shadow-sm">
-              {classesFromClubs.map((classItem) => (
-                <button
-                  key={classItem.value}
-                  onClick={() => setSelectedClass(classItem.value as ClassLevelsType)}
-                  className={`px-6 py-3 rounded-lg font-bold transition-all duration-200 ${
-                    selectedClass === classItem.value ? 'bg-[#0A427A] text-white shadow-lg' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {classItem.label}
-                </button>
-              ))}
-            </div>
+        <div className="container mx-auto px-4 flex flex-col gap-12">
+          <div className="text-center" data-scroll-point="search-title">
+            <h2 className="text-4xl md:text-5xl font-black text-[#FCB027]">ӨӨРТ ОЙР ДУГУЙЛАН ХАЙХ</h2>
           </div>
 
-          <div className="mb-16 max-w-4xl mx-auto" data-scroll-point="date-time">
-            <div className="bg-white/50 rounded-2xl p-8 border-2 border-slate-200 shadow-lg">
-              <div className="flex items-center gap-3 mb-6">
-                <Calendar className="w-6 h-6 text-orange-600" />
-                <h3 className="text-2xl font-black text-navy-900">Огноо ба цаг сонгох</h3>
+          <div className="max-w-4xl mx-auto" data-scroll-point="date-time">
+            <div className="bg-white/50 rounded-2xl p-8 border-2 border-slate-200 shadow-lg hover:shadow-2xl flex flex-col gap-8">
+              {/* Class Selector */}
+              <div data-scroll-point="class-selector">
+                <div className="flex items-center gap-2 mb-4">
+                  <Backpack className="w-5 h-5 text-orange-600" />
+                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Анги сонгох</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {classes.map((classItem) => (
+                    <button
+                      key={classItem.value}
+                      onClick={() => setSelectedClass((prev) => (prev === classItem.value ? '' : (classItem.value as ClassLevelsType)))}
+                      className={`px-6 py-4 rounded-xl border-2 font-bold transition-all duration-200 cursor-pointer ${
+                        selectedClass === classItem.value
+                          ? 'bg-[#0A427A] hover:border-[#0A427A] border-[#0A427A] text-white shadow-lg'
+                          : 'border-slate-200 hover:border-orange-600 text-slate-700 hover:bg-slate-100 '
+                      }`}
+                    >
+                      {classItem.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Date Selector */}
-              <div className="mb-8">
-                <Calendar className="w-6 h-6 text-orange-600" />
-                <p className="text-sm font-bold text-slate-600 mb-4 uppercase tracking-wide">Өдөр сонгох</p>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Calendar className="w-5 h-5 text-orange-600" />
+                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Өдөр сонгох</p>
+                </div>
+
                 <div className="grid grid-cols-7 gap-3">
-                  {availableDays.map((dayInfo) => (
+                  {availableDays.map((d) => (
                     <button
-                      key={dayInfo.day}
-                      onClick={() => setSelectedDate(dayInfo.day)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 ${
-                        selectedDate === dayInfo.day ? 'bg-orange-600 border-orange-600 text-white shadow-lg scale-105' : 'border-slate-200 hover:border-orange-600 text-slate-700 hover:bg-slate-50'
+                      key={d.day}
+                      onClick={() => setSelectedDate((prev) => (prev === d.day ? '' : d.day))}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                        selectedDate === d.day ? 'bg-orange-600 border-orange-600 text-white shadow-lg scale-105' : 'border-slate-200 hover:border-orange-600 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      <span className="text-xs font-bold text-center">{dayInfo.label}</span>
+                      <span className="text-sm font-bold text-center">{d.label}</span>
                     </button>
                   ))}
                 </div>
@@ -253,13 +185,16 @@ export const FilteredClubsForUser = () => {
                   <Clock className="w-5 h-5 text-orange-600" />
                   <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Цаг сонгох</p>
                 </div>
+
                 <div className="grid grid-cols-3 gap-3">
                   {timeSlots.map((timeSlot) => (
                     <button
                       key={timeSlot.value}
-                      onClick={() => setSelectedTime(timeSlot.value)}
-                      className={`py-4 px-6 rounded-xl border-2 font-bold transition-all duration-200 ${
-                        selectedTime === timeSlot.value ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'border-slate-200 hover:border-orange-600 text-slate-700 hover:bg-slate-50'
+                      onClick={() => setSelectedTime((prev) => (prev === timeSlot.value ? '' : timeSlot.value))}
+                      className={`py-4 px-6 rounded-xl border-2 font-bold transition-all duration-200 cursor-pointer ${
+                        selectedTime === timeSlot.value
+                          ? 'bg-[#0A427A] hover:bg-[#083563] border-[#0A427A] text-white shadow-lg'
+                          : 'border-slate-200 hover:border-orange-600 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
                       <div className="text-center">
@@ -272,57 +207,62 @@ export const FilteredClubsForUser = () => {
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="text-center mb-8">
-            <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-4">Хичээл сонгох</h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">Ангилалаас хичээлээ сонгоорой</p>
-          </div>
-
-          {/* Genre Tabs */}
-          <div className="max-w-4xl mx-auto mb-8 flex justify-center" data-scroll-point="genre">
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {genres.map((genre) => (
-                <button
-                  key={genre.id}
-                  onClick={() => setSelectedGenre(genre.id)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all duration-200 ${
-                    selectedGenre === genre.id ? 'bg-orange-600 text-white shadow-lg' : 'bg-white/50 text-slate-700 border-2 border-slate-200 hover:border-orange-400'
-                  }`}
-                >
-                  <span className="text-xl">{genre.icon}</span>
-                  <span>{genre.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Courses List - Scrollable */}
-          {selectedGenre && (
-            <div className="max-w-6xl mx-auto mb-16">
-              <div className="bg-white/50 rounded-2xl p-6 border-2 border-slate-200 shadow-lg">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">{genres.find((g) => g.id === selectedGenre)?.label}</h3>
-                <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-slate-100">
-                  {coursesByGenre[selectedGenre as keyof typeof coursesByGenre].map((item) => (
+              {/* Category Tabs */}
+              <div data-scroll-point="genre">
+                <div className="flex items-center gap-2 mb-4">
+                  <LayoutGrid className="w-5 h-5 text-orange-600" />
+                  <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Категори сонгох</p>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {categories.map((cat) => (
                     <button
-                      key={item.name}
-                      onClick={() => setSelectedSport(item.name)}
-                      className={`shrink-0 w-32 p-5 rounded-xl border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                        selectedSport === item.name ? 'border-orange-500 bg-orange-50 shadow-md' : 'border-slate-200 /50 hover:border-orange-300'
+                      key={cat.key}
+                      onClick={() => setSelectedCategory((prev) => (prev === cat.key ? '' : cat.key))}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold whitespace-nowrap transition-all duration-200 cursor-pointer border-2 ${
+                        selectedCategory === cat.key ? 'bg-orange-600 border-orange-600 text-white shadow-lg' : 'border-slate-200 hover:border-orange-600 text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      <div className="flex flex-col items-center gap-2">
-                        <div className={`text-4xl transition-transform duration-300 ${selectedSport === item.name ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</div>
-                        <span className={`font-semibold text-xs text-center transition-colors ${selectedSport === item.name ? 'text-orange-600' : 'text-slate-700'}`}>{item.name}</span>
-                      </div>
-                      {selectedSport === item.name && <div className="mt-2 w-full h-1 bg-orange-500 rounded-full"></div>}
+                      <span className="text-xl">{cat.icon}</span>
+                      <span>{cat.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* Courses List - Scrollable */}
+              {selectedCategory && (
+                <div className="mx-auto mb-16">
+                  <div className="flex items-center gap-2 mb-4">
+                    <LayoutList className="w-5 h-5 text-orange-600" />
+                    <p className="text-sm font-bold text-slate-600 uppercase tracking-wide">Төрөл сонгох</p>
+                  </div>
+                  {/* <div className="bg-white/50 rounded-2xl p-6 border-2 border-slate-200 shadow-lg"> */}
+                  {/* <h3 className="text-xl font-bold text-slate-900 mb-4">{CATEGORY_UI_MAP[selectedCategory]?.label ?? selectedCategory}</h3> */}
+                  <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-orange-400 scrollbar-track-slate-100">
+                    {subCategories.map((subCategory) => (
+                      <button
+                        key={subCategory.name}
+                        onClick={() => setSelectedSubCategory(subCategory.name)}
+                        className={`shrink-0 w-32 p-5 rounded-xl border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
+                          selectedSubCategory === subCategory.name ? 'border-orange-500 bg-orange-50 shadow-md' : 'border-slate-200 /50 hover:border-orange-300'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className={`text-4xl transition-transform duration-300 ${selectedSubCategory === subCategory.name ? 'scale-110' : 'group-hover:scale-110'}`}>{subCategory.icon}</div>
+                          <span className={`font-semibold text-xs text-center transition-colors ${selectedSubCategory === subCategory.name ? 'text-orange-600' : 'text-slate-700'}`}>
+                            {subCategory.name}
+                          </span>
+                        </div>
+                        {selectedSubCategory === subCategory.name && <div className="mt-2 w-full h-1 bg-orange-500 rounded-full"></div>}
+                      </button>
+                    ))}
+                  </div>
+                  {/* </div> */}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           <FilteredResult filteredClubs={filteredClubs} isFiltered={isFiltered} resetFilters={resetFilters} />
         </div>
