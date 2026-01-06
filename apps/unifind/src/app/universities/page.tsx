@@ -1,9 +1,8 @@
-'use client';
+import React from 'react';
 
-import { useState } from 'react';
-import useSWR from 'swr';
-import { FilterSidebar } from '../_components/filter-sidebar';
-import { ProgramGrid } from '../_components/program-grid';
+const page = () => {
+  return <div>page</div>;
+};
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
