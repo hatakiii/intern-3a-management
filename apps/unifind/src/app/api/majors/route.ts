@@ -39,27 +39,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+  const body = await req.json();
 
-    const universityId = Number(body.university_id);
+  const major = await prisma.majors.create({
+    data: {
+      name: body.name,
+      description: body.description,
+      degree_type: body.degree_type,
+      university_id: body.university_id,
+    },
+  });
 
-    if (!body.name || Number.isNaN(universityId)) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
-    }
-
-    const major = await prisma.majors.create({
-      data: {
-        name: body.name,
-        description: body.description || null,
-        degree_type: body.degree_type,
-        university_id: universityId,
-      },
-    });
-
-    return NextResponse.json(major, { status: 201 });
-  } catch (error) {
-    console.error('POST /api/majors error:', error);
-    return NextResponse.json({ error: 'Failed to create major' }, { status: 500 });
-  }
+  return NextResponse.json(major);
 }
