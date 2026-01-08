@@ -273,7 +273,7 @@ export function SearchCard() {
                   >
                     {/* Status badge */}
                     <div
-                      className={`top-3 right-3 px-2 py-1 text-xs font-semibold rounded-full ${
+                      className={` px-2 py-1 text-xs font-semibold w-17 rounded-full ${
                         passed ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
                       }`}
                     >
