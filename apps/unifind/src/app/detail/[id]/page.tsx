@@ -48,7 +48,6 @@ export default function UniversityDetailPage2({ params }: Props) {
       .then((json) => {
         setData2(json);
         setLoading(false);
-        console.log(json);
       })
       .catch(() => {
         setError('Мэдээлэл ачаалж чадсангүй');
@@ -95,7 +94,6 @@ export default function UniversityDetailPage2({ params }: Props) {
   const { data: majors, error: majorsError, isLoading: majorsLoading } = useSWR<Major[]>(`/api/majors?university_id=${uniId}`, fetcher);
 
   const { isSignedIn, user } = useUser();
-  console.log({ majors });
 
   const handleRegisterClick = async () => {
     if (!isSignedIn || !user) {
@@ -159,7 +157,6 @@ export default function UniversityDetailPage2({ params }: Props) {
     }
   };
 
-  console.log(user?.primaryEmailAddress?.id);
 
   if (majorsLoading || !majors || data === null) {
     return (

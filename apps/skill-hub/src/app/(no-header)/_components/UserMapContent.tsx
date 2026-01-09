@@ -2,6 +2,7 @@
 
 import { NewClubType } from '@/lib/utils/types';
 import type { LatLngBounds } from 'leaflet';
+import { LocateFixed } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
@@ -13,14 +14,17 @@ type UserMapContentProps = {
   setBounds: (b: LatLngBounds) => void;
   hoveredClubId: string | null;
   sidebarOpen: boolean;
+  currentLocation: [number, number] | null;
 };
 
-export default function UserMapContent({ visibleClubs, userLocation, zoom, setZoom, setBounds, hoveredClubId, sidebarOpen }: UserMapContentProps) {
+export default function UserMapContent({ visibleClubs, userLocation, zoom, setZoom, setBounds, hoveredClubId, sidebarOpen, currentLocation }: UserMapContentProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const clubLayerRef = useRef<L.LayerGroup | null>(null);
   const hasFittedRef = useRef(false);
   const router = useRouter();
+  const userCircleRef = useRef<L.Circle | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
     if (!mapRef.current || !userLocation || mapInstance.current) return;
@@ -55,12 +59,12 @@ export default function UserMapContent({ visibleClubs, userLocation, zoom, setZo
         map.on('moveend zoomend', () => {
           setZoom(map.getZoom());
           setBounds(map.getBounds());
+
+          if (userCircleRef.current) {
+            const z = map.getZoom();
+            userCircleRef.current.setRadius(z >= 15 ? 300 : z >= 13 ? 800 : 3000);
+          }
         });
-        L.circle(userLocation, {
-          radius: zoom >= 15 ? 300 : zoom >= 13 ? 800 : 3000,
-          color: '#2563eb',
-          fillOpacity: 0.15,
-        }).addTo(map);
 
         const userMarketHtml = `
       <div style="position: relative; width: 60px; height: 80px;">
@@ -88,7 +92,25 @@ export default function UserMapContent({ visibleClubs, userLocation, zoom, setZo
       </div>
     `;
 
-        L.marker(userLocation, {
+        userCircleRef.current = L.circle(userLocation, {
+          radius: 1000,
+          color: '#2563eb',
+          weight: 2,
+          fillColor: '#0A427A',
+          fillOpacity: 0.15,
+          dashArray: '5,10',
+        }).addTo(map);
+
+        map.on('zoomend', () => {
+          if (!userCircleRef.current || !mapInstance.current) return;
+
+          const zoom = mapInstance.current.getZoom();
+          const baseRadius = 500;
+          const zoomFactor = Math.pow(2, 17 - zoom);
+          userCircleRef.current.setRadius(baseRadius * zoomFactor);
+        });
+
+        userMarkerRef.current = L.marker(userLocation, {
           icon: L.divIcon({
             html: userMarketHtml,
             className: '',
@@ -203,7 +225,11 @@ export default function UserMapContent({ visibleClubs, userLocation, zoom, setZo
         marker.bindTooltip(
           `<div style="width:150px; border-radius:14px overflow-hidden">
               <img src="${club.clubImage}" style="width:100%; height:120px; object-fit:cover; border-radius:6px"/>
-              <strong>${club.clubName}</strong>
+              <strong style=" display: -webkit-box;
+              -webkit-line-clamp: 1; /
+              -webkit-box-orient: vertical;
+              overflow: hidden;
+              text-overflow: ellipsis;">${club.clubName}</strong>
             </div>`,
           { direction: 'top', offset: [0, -12], opacity: 1, permanent: false, interactive: true, className: 'club-tooltip' },
         );
@@ -273,6 +299,22 @@ export default function UserMapContent({ visibleClubs, userLocation, zoom, setZo
   return (
     <>
       <div ref={mapRef} className="w-full h-full" />
+      <div className="absolute bottom-6 right-6 z-1000">
+        <button
+          onClick={() => {
+            if (!mapInstance.current || !currentLocation) return;
+
+            mapInstance.current.setView(currentLocation, 17, { animate: true, duration: 0.8 });
+
+            if (userCircleRef.current) userCircleRef.current.setLatLng(currentLocation);
+            if (userMarkerRef.current) userMarkerRef.current.setLatLng(currentLocation);
+          }}
+          className="bg-white rounded-full p-3 shadow-lg hover:scale-105 transition"
+          title="Миний байршил"
+        >
+          <LocateFixed className="w-6 h-6 text-[#0A427A] cursor-pointer" />
+        </button>
+      </div>
     </>
   );
 }

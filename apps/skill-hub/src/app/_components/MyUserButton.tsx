@@ -10,7 +10,6 @@ export const MyUserButton = () => {
   const { user } = useUser();
   const router = useRouter();
   const role = user?.publicMetadata?.role;
-  console.log({ user });
 
   return (
     <div className="flex items-center">
@@ -23,7 +22,7 @@ export const MyUserButton = () => {
       </SignedOut>
       <SignedIn>
         <UserButton>
-          <UserButton.MenuItems>{role !== 'GENERAL' && <UserButton.Action label="Миний хуудас" labelIcon={<Layers2 />} onClick={() => router.push('/user-profile')} />}</UserButton.MenuItems>
+          <UserButton.MenuItems>{role !== 'ADMIN' && <UserButton.Action label="Миний хуудас" labelIcon={<Layers2 />} onClick={() => router.push('/user-profile')} />}</UserButton.MenuItems>
         </UserButton>
       </SignedIn>
     </div>

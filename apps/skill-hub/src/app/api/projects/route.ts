@@ -1,5 +1,6 @@
 import { Project } from '@/lib/models/Project';
 import connectDB from '@/lib/mongodb';
+import Ably from 'ably';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -9,19 +10,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { clubId, adminId, title, description, classLevel, difficultyLevel, childrenCount, startDate, finishDate } = body;
 
-    console.log('Received data:', { clubId, adminId, title, description, classLevel, difficultyLevel, childrenCount, startDate, finishDate });
-
     // Validate required fields
     if (!clubId || !adminId || !title || !description || !classLevel || !difficultyLevel || childrenCount === undefined || childrenCount === null || childrenCount === '') {
-      console.log('Validation failed:', {
-        clubId: !!clubId,
-        adminId: !!adminId,
-        title: !!title,
-        description: !!description,
-        classLevel: !!classLevel,
-        difficultyLevel: !!difficultyLevel,
-        childrenCount: childrenCount,
-      });
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -37,6 +27,10 @@ export async function POST(request: NextRequest) {
       startDate: startDate ? new Date(startDate) : undefined,
       finishDate: finishDate ? new Date(finishDate) : undefined,
     });
+
+    const ably = new Ably.Rest({ key: process.env.ABLY_API_KEY });
+    const channel = ably.channels.get(`club-${clubId}-projects`);
+    await channel.publish({ name: 'project-created', data: newProject });
 
     return NextResponse.json(
       {

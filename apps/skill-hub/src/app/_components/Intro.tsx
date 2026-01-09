@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ImSearch } from 'react-icons/im';
 
-// Counter Animation Component
 const AnimatedCounter = ({ target, duration = 2, shouldStart }: { target: number; duration?: number; shouldStart: boolean }) => {
   const count = useMotionValue(0);
   const rounded = useTransform(count, (latest) => Math.round(latest));
@@ -15,8 +14,6 @@ const AnimatedCounter = ({ target, duration = 2, shouldStart }: { target: number
 
   useEffect(() => {
     if (!shouldStart) return;
-
-    console.log('Starting counter animation to:', target);
 
     const controls = animate(count, target, {
       duration,
@@ -49,7 +46,6 @@ export const Intro = () => {
     const totalDelay = 300 + 200 * 3 + 1500; // 2.4 seconds
 
     const timer = setTimeout(() => {
-      console.log('Stats animation completed, starting counters');
       setShouldStartCounting(true);
     }, totalDelay);
 
