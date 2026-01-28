@@ -1,63 +1,44 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import axios from 'axios';
 import { Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { EmployeeType } from '../libs/type';
 import { hrPostedJobs } from '../libs/utils/get-datas';
 import { FooterNav, PostedJobCard, PostedJobsHeading } from './_components';
 
 export default function HomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
+  const [checkingUser, setCheckingUser] = useState<boolean>(true);
+  const { getToken } = useAuth();
+  console.log({ user });
   useEffect(() => {
-    if (isLoaded && !user) {
+    if (!isLoaded) return;
+
+    if (!user) {
       router.push('/sign-in');
+      return;
     }
-  }, [user, isLoaded, router]);
 
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-
-    const createUser = async () => {
-      setIsSubmitting(true);
-
-      const userData: EmployeeType = {
-        employeeClerkId: '1',
-        employeeLastName: '2',
-        employeeFirstName: '3',
-        employeeEmail: '4444444',
-        employeeTelNumber: '5',
-        employeeDepartment: '6',
-        employeeJobTitle: '7',
-        employeeJobType: 'SHIFT_BASED',
-        employeeJobLevel: 'UNIT_HEAD',
-      };
-
+    const checkUser = async () => {
+      const token = await getToken();
       try {
-        const response = await axios.post('http://localhost:4000/user', userData, { headers: { 'Content-Type': 'application/json' } });
+        await axios.get('http://localhost:4000/user/check', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        toast.success(response.data.message);
+        setCheckingUser(false);
       } catch (error: any) {
-        if (error.response?.data?.error) {
-          toast.error(`Алдаа: ${JSON.stringify(error.response.data.error)}`);
-        } else {
-          toast.error('Алдаа гарлаа');
-        }
-        console.error('User creation error:', error);
-      } finally {
-        setIsSubmitting(false);
+        if (error.response?.status === 404) router.push('/complete-profile');
       }
     };
-    createUser();
-  }, [isLoaded, user]);
 
-  if (!user || !isLoaded || isSubmitting)
+    checkUser();
+  }, [user, isLoaded, router]);
+
+  if (!user || !isLoaded || checkingUser)
     return (
       <div className="min-h-screen flex justify-center items-center">
         <Loader className="animate-spin" size={32} />
